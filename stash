@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+'''stash is a utility for operating on files across many folders.
+'''
 import os
 import sys
 import json
@@ -20,6 +22,7 @@ def __update(func):
         except ValueError:
             sys.stderr.write('Stash file corrupted. Delete this file to continue: %s\n' % __stash_file_path())
             return 1
+
         data = func(data)
         f.seek(0)
         json.dump(data, f, sort_keys=True, indent=4, separators=(',', ': '))
@@ -46,6 +49,22 @@ def stash(filename):
 def pop():
     __ensure_stash_file_exists()
 
+    def f(data):
+        if 'files' not in data or len(data['files']) == 0:
+            sys.stderr.write('Error: Stash empty. Cannot pop.\n')
+            return data
+        print data['files'].pop()
+        return data
+
+    return __update(f)
+
+
 if __name__ == '__main__':
-    sys.exit(stash(sys.argv[1]))
+    if sys.argv[0].endswith('stash'):
+        sys.exit(stash(sys.argv[1]))
+    elif sys.argv[0].endswith('pop'):
+        sys.exit(pop())
+    else:
+        sys.stderr.write('Unrecognized command: %s\n' % sys.argv[0])
+        sys.exit(1)
 
