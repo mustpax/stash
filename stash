@@ -13,29 +13,38 @@ def __ensure_stash_file_exists():
         with open(__stash_file_path(), 'w') as f:
             f.write('{}')
 
-def stash(filename):
-    __ensure_stash_file_exists()
-    filename = os.path.abspath(filename)
-
-    if not os.path.exists(filename):
-        sys.stderr.write('File not found: %s\n' % filename)
-        return 1
-
+def __update(func):
     with open(__stash_file_path(), 'r+') as f:
         try:
             data = json.load(f)
         except ValueError:
             sys.stderr.write('Stash file corrupted. Delete this file to continue: %s\n' % __stash_file_path())
             return 1
-
-        print 'Adding file as last item:', filename
-        if 'files' not in data:
-            data['files'] = []
-        data['files'].append(filename)
+        data = func(data)
         f.seek(0)
         json.dump(data, f, sort_keys=True, indent=4, separators=(',', ': '))
         f.truncate()
     return 0
+
+def stash(filename):
+    __ensure_stash_file_exists()
+
+    filename = os.path.abspath(filename)
+    if not os.path.exists(filename):
+        sys.stderr.write('File not found: %s\n' % filename)
+        return 1
+
+    def f(data):
+        print 'Adding file as last item:', filename
+        if 'files' not in data:
+            data['files'] = []
+        data['files'].append(filename)
+        return data
+
+    return __update(f)
+
+def pop():
+    __ensure_stash_file_exists()
 
 if __name__ == '__main__':
     sys.exit(stash(sys.argv[1]))
