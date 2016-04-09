@@ -69,12 +69,25 @@ def move(target='.'):
     if not os.path.isdir(target):
         print >>sys.stderr, 'Error, target is not a directoy:', target
         return 1
-    pass
 
     return __update(f)
 
 def copy(target='.'):
-    pass
+    def f(data):
+        if 'files' not in data or len(data['files']) == 0:
+            sys.stderr.write('Error: Stash empty. Cannot pop.\n')
+            return data
+        file = data['files'].pop()
+        t = os.path.join(target, os.path.basename(file))
+        shutil.copy(file, t)
+        print >>sys.stderr, 'Copied from %s to %s' % (file, t)
+        return data
+
+    if not os.path.isdir(target):
+        print >>sys.stderr, 'Error, target is not a directoy:', target
+        return 1
+
+    return __update(f)
 
 USAGE = '''\
 Usage: stash [command] [file]
