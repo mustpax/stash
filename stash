@@ -89,6 +89,16 @@ def copy(target='.'):
 
     return __update(f)
 
+def list():
+    def f(data):
+        if 'files' not in data or len(data['files']) == 0:
+            return data
+        for f in data['files'][::-1]:
+            print f
+        return data
+
+    return __update(f)
+
 USAGE = '''\
 Usage: stash [command] [file]
 If command is omitted 'stash' is assumed
@@ -102,6 +112,7 @@ Commands:
    mv [target]:     move the file at the top of the stash to given target dir.
                     remove it from the stash.
                     if target dir is omitted, current directory is assumed.
+   ls:              list all files in the stash, in reverse insertion order.
 '''
 
 def usage():
@@ -114,6 +125,7 @@ COMMANDS = {
         'pop':      pop,
         'cp':       copy,
         'mv':       move,
+        'ls':       list,
         }
 
 def main(args):
