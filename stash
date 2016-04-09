@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 '''stash is a utility for operating on files across many folders.
 '''
-import os
-import sys
 import json
+import os
+import shutil
+import sys
 
 STASH_FILE = '.stash'
 
@@ -30,8 +31,6 @@ def __update(func):
     return 0
 
 def stash(filename):
-    __ensure_stash_file_exists()
-
     filename = os.path.abspath(filename)
     if not os.path.exists(filename):
         sys.stderr.write('File not found: %s\n' % filename)
@@ -47,8 +46,6 @@ def stash(filename):
     return __update(f)
 
 def pop():
-    __ensure_stash_file_exists()
-
     def f(data):
         if 'files' not in data or len(data['files']) == 0:
             sys.stderr.write('Error: Stash empty. Cannot pop.\n')
@@ -58,12 +55,40 @@ def pop():
 
     return __update(f)
 
+def move(target='.'):
+    def f(data):
+        if 'files' not in data or len(data['files']) == 0:
+            sys.stderr.write('Error: Stash empty. Cannot pop.\n')
+            return data
+        file = data['files'].pop()
+        t = os.path.join(target, os.path.basename(file))
+        os.rename(file, t)
+        print >>sys.stderr, 'Moved from %s to %s' % (file, t)
+        return data
+
+    if not os.path.isdir(target):
+        print >>sys.stderr, 'Error, target is not a directoy:', target
+        return 1
+    pass
+
+    return __update(f)
+
+def copy(target='.'):
+    pass
+
 USAGE = '''\
 Usage: stash [command] [file]
 If command is omitted 'stash' is assumed
 Commands:
-   stash: save given file at the top of the stash
-   pop:   remove the file at the top of the stash and write it its name to stdout
+   stash [file]:    save given file at the top of the stash
+   pop:             print the file at the top of the stash. remove it from the
+                    stash.
+   cp [target]:     copy the file at the top of the stash to given target dir.
+                    remove it from the stash.
+                    if target dir is omitted, current directory is assumed.
+   mv [target]:     move the file at the top of the stash to given target dir.
+                    remove it from the stash.
+                    if target dir is omitted, current directory is assumed.
 '''
 
 def usage():
@@ -71,12 +96,16 @@ def usage():
 
 
 COMMANDS = {
-        'stash': stash,
-        'p': pop,
-        'pop': pop,
+        'stash':    stash,
+        'p':        pop,
+        'pop':      pop,
+        'cp':       copy,
+        'mv':       move,
         }
 
 def main(args):
+    __ensure_stash_file_exists()
+
     if len(args) == 0 or len(args) > 2:
         usage()
         return 1
