@@ -58,13 +58,40 @@ def pop():
 
     return __update(f)
 
+USAGE = '''\
+Usage: stash [command] [file]
+If command is omitted 'stash' is assumed
+Commands:
+   stash: save given file at the top of the stash
+   pop:   remove the file at the top of the stash and write it its name to stdout
+'''
+
+def usage():
+    print >>sys.stderr, USAGE
+
+
+COMMANDS = {
+        'stash': stash,
+        'p': pop,
+        'pop': pop,
+        }
+
+def main(args):
+    if len(args) == 0 or len(args) > 2:
+        usage()
+        return 1
+
+    cmd = args[0]
+    if cmd in COMMANDS:
+        return COMMANDS[cmd](*args[1:])
+
+    if os.path.exists(cmd):
+        return stash(args[0])
+
+    print >>sys.stderr, 'Unrecognized command:', cmd
+    usage()
+    return 1
 
 if __name__ == '__main__':
-    if sys.argv[0].endswith('stash'):
-        sys.exit(stash(sys.argv[1]))
-    elif sys.argv[0].endswith('pop'):
-        sys.exit(pop())
-    else:
-        sys.stderr.write('Unrecognized command: %s\n' % sys.argv[0])
-        sys.exit(1)
+    sys.exit(main(sys.argv[1:]))
 
