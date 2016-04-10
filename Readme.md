@@ -21,7 +21,7 @@ If command is omitted the command `stash` is assumed.
 
 Move `file1` from `~/foo` to `~/bar`.
 
-```
+```bash
 cd ~/foo
 stash file1
 cd ..
@@ -31,7 +31,7 @@ stash mv
 
 Move `file1` and `file2` from `~/foo` to `~/bar`.
 
-```
+```bash
 cd ~/foo
 stash file1
 stash file2
