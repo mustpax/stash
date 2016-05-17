@@ -30,17 +30,19 @@ def __update(func):
         f.truncate()
     return 0
 
-def stash(filename):
-    filename = os.path.abspath(filename)
-    if not os.path.exists(filename):
-        sys.stderr.write('File not found: %s\n' % filename)
-        return 1
+def stash(*filenames):
+    filenames = map(os.path.abspath, filenames)
+
+    for filename in filenames:
+        if not os.path.exists(filename):
+            sys.stderr.write('File not found: %s\n' % filename)
+            return 1
 
     def f(data):
-        print 'Adding file as last item:', filename
+        print 'Adding files:', '\n\t'.join(filenames)
         if 'files' not in data:
             data['files'] = []
-        data['files'].append(filename)
+        data['files'].extend(filenames)
         return data
 
     return __update(f)
@@ -131,7 +133,7 @@ COMMANDS = {
 def main(args):
     __ensure_stash_file_exists()
 
-    if len(args) == 0 or len(args) > 2:
+    if len(args) == 0:
         usage()
         return 1
 
@@ -140,7 +142,7 @@ def main(args):
         return COMMANDS[cmd](*args[1:])
 
     if os.path.exists(cmd):
-        return stash(args[0])
+        return stash(*args[0:])
 
     print >>sys.stderr, 'Unrecognized command:', cmd
     usage()
