@@ -74,15 +74,31 @@ def move(target='.'):
 
     return __update(f)
 
+def copy_all(target='.'):
+    return __copy(True, target)
+
 def copy(target='.'):
+    return __copy(False, target)
+
+def __copy(copy_all, target='.'):
     def f(data):
         if 'files' not in data or len(data['files']) == 0:
             sys.stderr.write('Error: Stash empty. Cannot pop.\n')
             return data
-        file = data['files'].pop()
-        t = os.path.join(target, os.path.basename(file))
-        shutil.copy(file, t)
-        print >>sys.stderr, 'Copied from %s to %s' % (file, t)
+
+        while len(data['files']):
+            file = data['files'].pop()
+            t = os.path.join(target, os.path.basename(file))
+            if os.path.isdir(file):
+                shutil.copytree(file, t)
+                print >>sys.stderr, 'Copied dir from %s to %s' % (file, t)
+            else:
+                shutil.copy2(file, t)
+                print >>sys.stderr, 'Copied file from %s to %s' % (file, t)
+
+            if not copy_all:
+                break
+
         return data
 
     if not os.path.isdir(target):
@@ -111,6 +127,9 @@ Commands:
    cp [target]:     copy the file at the top of the stash to given target dir.
                     remove it from the stash.
                     if target dir is omitted, current directory is assumed.
+   cpall [target]:  copy all the  files in the stash to given target dir then
+                    clear stash.
+                    if target dir is omitted, current directory is assumed.
    mv [target]:     move the file at the top of the stash to given target dir.
                     remove it from the stash.
                     if target dir is omitted, current directory is assumed.
@@ -126,6 +145,7 @@ COMMANDS = {
         'p':        pop,
         'pop':      pop,
         'cp':       copy,
+        'cpall':    copy_all,
         'mv':       move,
         'ls':       list,
         }
