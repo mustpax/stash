@@ -57,15 +57,21 @@ def pop():
 
     return __update(f)
 
-def move(target='.'):
+def move_all(target='.'):
+    return move(target, True)
+
+def move(target='.', move_all=False):
     def f(data):
         if 'files' not in data or len(data['files']) == 0:
             sys.stderr.write('Error: Stash empty. Cannot pop.\n')
             return data
-        file = data['files'].pop()
-        t = os.path.join(target, os.path.basename(file))
-        os.rename(file, t)
-        print >>sys.stderr, 'Moved from %s to %s' % (file, t)
+        while len(data['files']):
+            file = data['files'].pop()
+            t = os.path.join(target, os.path.basename(file))
+            os.rename(file, t)
+            print >>sys.stderr, 'Moved from %s to %s' % (file, t)
+            if not move_all:
+                break
         return data
 
     if not os.path.isdir(target):
@@ -147,6 +153,7 @@ COMMANDS = {
         'cp':       copy,
         'cpall':    copy_all,
         'mv':       move,
+        'mvall':    move_all,
         'ls':       list,
         }
 
